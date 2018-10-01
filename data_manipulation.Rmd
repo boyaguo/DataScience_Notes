@@ -106,9 +106,32 @@ filter first condition giving the second condition is also true:
 filter(litters_data, pups_born_alive %in% 4:7,!is.na(gd0_weight))
 ````
 
+## Mutate 
+
+create variables (added to the end of dataset), and changed to lower case
+
+```{r}
+mutate(litters_data, 
+wt_gain=gd18_weight -gd0_weight,
+group=tolower(group))
+
+mutate(litters_data, 
+wt_gain=gd18_weight -gd0_weight,
+wt_gain=wt_gain^2)
+````
 
 
+## Arrange 
 
+Arrange the data by gd0_weight from the smallest weight to the largest weight. 
 
+Can also arrange by serveral things: frist by pups_born_alive then by gd0_weight:  
+
+```{r}
+arrange(litters_data, gd0_weight)
+arrange(litters_data, pups_born_alive, gd0_weight)
+arrange(litters_data, desc(pups_born_alive), gd0_weight)
+
+````
 
 
