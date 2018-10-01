@@ -9,19 +9,51 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
-
 `````
 
-## Import FAS csv files 
+## Gather
 
-Import my first csv to use as an example.
+Pulse data 
 
 ```{r}
-litters_data = read_csv("./data/FAS_litters.csv",
-  col_types = "ccddiiii")
-litters_data = janitor::clean_names(litters_data)
-
-pups_data = read_csv("./data/FAS_pups.csv",
-  col_types = "ciiiii")
-pups_data = janitor::clean_names(pups_data)
+pulse_data = haven::read_sas("./data/public_pulse_data.sas7bdat") %>%
+  janitor::clean_names()
+pulse_data
+pulse_data %>% View
 `````
+
+This isn't tidy yet...
+
+```{r}
+pulse_data %>%
+gather(key ="visit",value ="bdi_score", bdi_score_bl:bdi_score_12m) %>% View
+````
+
+
+```{r}
+pulse_tidy=pulse_data %>%
+gather(key = "visit",value ="bdi_score", bdi_score_bl:bdi_score_12m) %>% View("tidy")
+
+pulse_data %>% View("nontidy")
+````
+
+Illustrate: separate,mutate and replace: 
+
+```{r}
+pulse_tidy_data = gather(pulse_data, key = visit, value = bdi, bdi_score_bl:bdi_score_12m)
+
+separate(pulse_tidy_data, visit, into = c("remove_1", "remove_2", "visit"), sep = "_")
+````
+
+All together, the data import/cleaning pipline is: 
+
+```{r}
+pulse_df = 
+  haven::read_sas("./data/public_pulse_data.sas7bdat") %>%
+  janitor::clean_names() %>% 
+  gather(key = "visit", value = "bdi_score", bdi_score_bl:bdi_score_12m) %>% 
+  separate(visit, into = c("bdi_str", "score_str", "visit"), sep = "_") %>% 
+  select(-bdi_str, -score_str) %>% 
+  mutate(visit = replace(visit, visit == "bl", "00m"))
+```
+

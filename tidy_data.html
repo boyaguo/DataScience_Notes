@@ -128,16 +128,66 @@ $(document).ready(function () {
 </div>
 
 
-<div id="import-fas-csv-files" class="section level2">
-<h2>Import FAS csv files</h2>
-<p>Import my first csv to use as an example.</p>
-<pre class="r"><code>litters_data = read_csv(&quot;./data/FAS_litters.csv&quot;,
-  col_types = &quot;ccddiiii&quot;)
-litters_data = janitor::clean_names(litters_data)
-
-pups_data = read_csv(&quot;./data/FAS_pups.csv&quot;,
-  col_types = &quot;ciiiii&quot;)
-pups_data = janitor::clean_names(pups_data)</code></pre>
+<div id="gather" class="section level2">
+<h2>Gather</h2>
+<p>Pulse data</p>
+<pre class="r"><code>pulse_data = haven::read_sas(&quot;./data/public_pulse_data.sas7bdat&quot;) %&gt;%
+  janitor::clean_names()
+pulse_data</code></pre>
+<pre><code>## # A tibble: 1,087 x 7
+##       id   age sex  bdi_score_bl bdi_score_01m bdi_score_06m bdi_score_12m
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;ch&gt;        &lt;dbl&gt;         &lt;dbl&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+##  1 10003  48.0 male            7             1             2             0
+##  2 10015  72.5 male            6            NA            NA            NA
+##  3 10022  58.5 male           14             3             8            NA
+##  4 10026  72.7 male           20             6            18            16
+##  5 10035  60.4 male            4             0             1             2
+##  6 10050  84.7 male            2            10            12             8
+##  7 10078  31.3 male            4             0            NA            NA
+##  8 10088  56.9 male            5            NA             0             2
+##  9 10091  76.0 male            0             3             4             0
+## 10 10092  74.2 fem~           10             2            11             6
+## # ... with 1,077 more rows</code></pre>
+<pre class="r"><code>pulse_data %&gt;% View</code></pre>
+<p>This isn’t tidy yet…</p>
+<pre class="r"><code>pulse_data %&gt;%
+gather(key =&quot;visit&quot;,value =&quot;bdi_score&quot;, bdi_score_bl:bdi_score_12m) %&gt;% View</code></pre>
+<pre><code>## Warning: attributes are not identical across measure variables;
+## they will be dropped</code></pre>
+<pre class="r"><code>pulse_tidy=pulse_data %&gt;%
+gather(key = &quot;visit&quot;,value =&quot;bdi_score&quot;, bdi_score_bl:bdi_score_12m) %&gt;% View(&quot;tidy&quot;)</code></pre>
+<pre><code>## Warning: attributes are not identical across measure variables;
+## they will be dropped</code></pre>
+<pre class="r"><code>pulse_data %&gt;% View(&quot;nontidy&quot;)</code></pre>
+<p>Illustrate: separate,mutate and replace:</p>
+<pre class="r"><code>pulse_tidy_data = gather(pulse_data, key = visit, value = bdi, bdi_score_bl:bdi_score_12m)</code></pre>
+<pre><code>## Warning: attributes are not identical across measure variables;
+## they will be dropped</code></pre>
+<pre class="r"><code>separate(pulse_tidy_data, visit, into = c(&quot;remove_1&quot;, &quot;remove_2&quot;, &quot;visit&quot;), sep = &quot;_&quot;)</code></pre>
+<pre><code>## # A tibble: 4,348 x 7
+##       id   age sex    remove_1 remove_2 visit   bdi
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt; &lt;dbl&gt;
+##  1 10003  48.0 male   bdi      score    bl        7
+##  2 10015  72.5 male   bdi      score    bl        6
+##  3 10022  58.5 male   bdi      score    bl       14
+##  4 10026  72.7 male   bdi      score    bl       20
+##  5 10035  60.4 male   bdi      score    bl        4
+##  6 10050  84.7 male   bdi      score    bl        2
+##  7 10078  31.3 male   bdi      score    bl        4
+##  8 10088  56.9 male   bdi      score    bl        5
+##  9 10091  76.0 male   bdi      score    bl        0
+## 10 10092  74.2 female bdi      score    bl       10
+## # ... with 4,338 more rows</code></pre>
+<p>All together, the data import/cleaning pipline is:</p>
+<pre class="r"><code>pulse_df = 
+  haven::read_sas(&quot;./data/public_pulse_data.sas7bdat&quot;) %&gt;%
+  janitor::clean_names() %&gt;% 
+  gather(key = &quot;visit&quot;, value = &quot;bdi_score&quot;, bdi_score_bl:bdi_score_12m) %&gt;% 
+  separate(visit, into = c(&quot;bdi_str&quot;, &quot;score_str&quot;, &quot;visit&quot;), sep = &quot;_&quot;) %&gt;% 
+  select(-bdi_str, -score_str) %&gt;% 
+  mutate(visit = replace(visit, visit == &quot;bl&quot;, &quot;00m&quot;))</code></pre>
+<pre><code>## Warning: attributes are not identical across measure variables;
+## they will be dropped</code></pre>
 </div>
 
 
