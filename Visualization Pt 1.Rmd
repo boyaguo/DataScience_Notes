@@ -7,4 +7,115 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggridges)
 ```
+
+```{r data_import, cache=TRUE}
+library(rnoaa)
+
+weather_df = 
+  rnoaa::meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                      var = c("PRCP", "TMIN", "TMAX"), 
+                      date_min = "2017-01-01",
+                      date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+
+weather_df
+
+View(weather_df)
+```
+
+## Start a plot 
+
+Blank plot 
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax))
+```
+
+Scatterplot (add gemo points to the plot)
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+A scatterplot focues only on Central Park: 
+```{r}
+weather_df %>% 
+  filter(name == "CentralPark_NY") %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+Name the ggplot: 
+
+```{r}
+weather_sp = 
+  ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+## More plot options 
+
+Add an aesthetic: 
+
+color based on different names:
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name))
+```
+
+Add a geomtry: 
+
+gemo_smooth: add a smooth line in the graph. Se=FALSE: trun off the confidence interval on the plot.  
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name))+
+  geom_smooth (Se=FALSE)
+```
+
+Adjust the transparency level of points. In this case maping exists only inside of the geom_point. 
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha=0.4)+
+  geom_smooth (Se=FALSE)
+```
+
+What if we put color=name inside of the aes(). Right now, the aestheic mapping is defined anywhere of all the geom_point on the map. 
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = 0.4) + 
+  geom_smooth(se = FALSE)
+```
+
+Facetting...
+
+create seperate panes for the name variables: 
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha=0.4)+
+  geom_smooth (Se=FALSE)+ 
+  facet_grid( ~ name)
+```
+
+A more interesting plot...
+
+see the max temp of the year, and add the size of these point.
+
+geom_line: instead of dots, show lines connect the points 
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name, size = prcp)) +
+  geom_point() + 
+  geom_smooth(se = FALSE) + 
+  facet_grid(~name)
+```
+
+
