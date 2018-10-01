@@ -25,3 +25,80 @@ pups_data = read_csv(file = "./data/FAS_pups.csv")
 pups_data=janitor::clean_names(litters_data)
 pups_data
 `````
+
+## Look at data 
+
+Look at litters data 
+
+```{r}
+litters_data 
+head(litters_data)
+tail(litters_data)
+
+skimr:: skim(litters_data)
+`````
+
+Skip some rows; omit variable names
+
+```{r}
+litters_data = read_csv(file = "./data/FAS_litters.csv",
+  skip = 10, col_names = FALSE)
+litters_data
+`````
+
+Repeat the data import process for the file FAS_pups 
+
+```{r}
+pups_data = read_csv("./data/FAS_pups.csv", col_types = "ciiiii")
+pups_data= janitor::clean_names(pups_data)
+skimr::skim(pups_data)
+pups_data
+`````
+
+What happens if your specifications for column parsing aren’t reasonable (e.g. character instead of double, or vice versa)?
+
+```{r}
+pups_data = read_csv("./data/FAS_pups.csv", col_types = "diiiii")
+pups_data= janitor::clean_names(pups_data)
+skimr::skim(pups_data)
+pups_data
+`````
+The first column will become all missing data.
+
+## Other formats 
+
+Read in mlb data
+
+```{r}
+library(readxl)
+mlb11_data = read_excel("data/mlb11.xlsx", n_max = 20)
+head(mlb11_data, 5)
+
+mlb_subset=read_excel("data/mlb11.xlsx",range="A1:E17")
+mlb_subset
+`````
+
+Read in pulse data
+
+```{r}
+library(haven)
+pulse_data = read_sas("./data/public_pulse_data.sas7bdat")
+head(pulse_data, 5)
+pulse_data
+`````
+
+## Compare with base R
+
+```{r}
+pups_base = read.csv("./data/FAS_pups.csv")
+pups_readr = read_csv("./data/FAS_pups.csv")
+
+View(pups_base)
+View(pups_readr)
+
+pups_base
+pups_readr
+
+pups_base$S
+pups_readr$S
+`````
