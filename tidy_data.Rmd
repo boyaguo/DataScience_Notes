@@ -56,4 +56,42 @@ pulse_df =
   select(-bdi_str, -score_str) %>% 
   mutate(visit = replace(visit, visit == "bl", "00m"))
 ```
+## Revisit litters dataset 
+
+```{r}
+litters_data = read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>% 
+  janitor::clean_names() %>% 
+  separate(group, into = c("dose", "day"), 3)
+```
+The number 3 indicates the location to separate. 
+
+## Learning Assessment
+
+```{r}
+litters_data %>% 
+  select(litter_number, ends_with("weight")) %>% 
+  gather(key = gd, value = weight, gd0_weight:gd18_weight) %>%
+  mutate(gd = recode(gd, "gd0_weight" = 0, "gd18_weight" = 18))
+```
+
+## Spread (a reverse operation of gather)
+
+Create analysis_result
+
+```{r}
+analysis_result = tibble(
+  group = c("treatment", "treatment", "placebo", "placebo"),
+  time = c("pre", "post", "pre", "post"),
+  mean = c(4, 8, 3.5, 4)
+)
+```
+
+Make it readable:
+
+```{r}
+analysis_result %>% 
+  spread(key = time, value = mean) %>% 
+  knitr::kable()
+```
+knitr makes the table more presentable. 
 
