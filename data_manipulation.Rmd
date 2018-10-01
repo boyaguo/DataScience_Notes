@@ -60,7 +60,51 @@ select (litters_data, starts_with("gd"))
 select (litters_data, litter_number, starts_with("gd"))
 
 select(litters_data, litter_number, everything())
-````` 
+`````
+
+...Learning assignment 
+```{r}
+select(pups_data, litter_number, sex, pd_ears)
+````
+
+## Filter observations 
+
+do some filitering 
+
+```{r}
+filter(litters_data, gd0_weight<225)
+filter(litters_data, gd0_weight >=225)
+filter(litters_data, pups_born_alive==225)
+````
+
+is it true that gd0_weight is missing 
+
+```{r}
+filter(litters_data, is.na(gd0_weight))
+````
+
+exclude gd0_weight=missing 
+```{r}
+filter(litters_data, !is.na(gd0_weight))
+````
+
+filter group=Low 8 or group=Low7.Two ways below:
+```{r}
+filter(litters_data, group=="Low8"| group=="Low7")
+````
+```{r}
+filter(litters_data, group %in% c("Low8", "Low7"))
+````
+
+filter pups_born_alive is 4 to 6: 
+```{r}
+filter(litters_data, pups_born_alive %in% 4:6)
+````
+
+filter first condition giving the second condition is also true:
+```{r}
+filter(litters_data, pups_born_alive %in% 4:7,!is.na(gd0_weight))
+````
 
 
 
