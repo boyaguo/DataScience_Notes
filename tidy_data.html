@@ -256,6 +256,65 @@ gather(key = &quot;visit&quot;,value =&quot;bdi_score&quot;, bdi_score_bl:bdi_sc
 </tbody>
 </table>
 </div>
+<div id="bind-rows" class="section level2">
+<h2>Bind rows</h2>
+<p>Read in Lord of Rings data:</p>
+<pre class="r"><code>fellowship_ring = readxl::read_excel(&quot;./data/LotR_Words.xlsx&quot;, range = &quot;B3:D6&quot;) %&gt;%
+  mutate(movie = &quot;fellowship_ring&quot;)
+
+two_towers = readxl::read_excel(&quot;./data/LotR_Words.xlsx&quot;, range = &quot;F3:H6&quot;) %&gt;%
+  mutate(movie = &quot;two_towers&quot;)
+
+return_king = readxl::read_excel(&quot;./data/LotR_Words.xlsx&quot;, range = &quot;J3:L6&quot;) %&gt;%
+  mutate(movie = &quot;return_king&quot;)</code></pre>
+<p>Create final tidy Lord of Rings data:</p>
+<pre class="r"><code>bind_rows(fellowship_ring, two_towers, return_king) %&gt;% 
+  janitor::clean_names() %&gt;% 
+  gather(key = sex, value = word, female:male) %&gt;% 
+  mutate(race = tolower(race))</code></pre>
+<pre><code>## # A tibble: 18 x 4
+##    race   movie           sex     word
+##    &lt;chr&gt;  &lt;chr&gt;           &lt;chr&gt;  &lt;dbl&gt;
+##  1 elf    fellowship_ring female  1229
+##  2 hobbit fellowship_ring female    14
+##  3 man    fellowship_ring female     0
+##  4 elf    two_towers      female   331
+##  5 hobbit two_towers      female     0
+##  6 man    two_towers      female   401
+##  7 elf    return_king     female   183
+##  8 hobbit return_king     female     2
+##  9 man    return_king     female   268
+## 10 elf    fellowship_ring male     971
+## 11 hobbit fellowship_ring male    3644
+## 12 man    fellowship_ring male    1995
+## 13 elf    two_towers      male     513
+## 14 hobbit two_towers      male    2463
+## 15 man    two_towers      male    3589
+## 16 elf    return_king     male     510
+## 17 hobbit return_king     male    2673
+## 18 man    return_king     male    2459</code></pre>
+</div>
+<div id="join-data" class="section level2">
+<h2>Join data</h2>
+<p>Load the FAS datasets</p>
+<pre class="r"><code>pup_data = read_csv(&quot;./data/FAS_pups.csv&quot;, col_types = &quot;ciiiii&quot;) %&gt;%
+  janitor::clean_names() %&gt;%
+  mutate(sex = recode(sex, `1` = &quot;male&quot;, `2` = &quot;female&quot;)) 
+
+litter_data = read_csv(&quot;./data/FAS_litters.csv&quot;, col_types = &quot;ccddiiii&quot;) %&gt;%
+  janitor::clean_names() %&gt;%
+  select(-pups_survive) %&gt;%
+  mutate(
+    wt_gain = gd18_weight - gd0_weight,
+    group = tolower(group))
+
+View(pup_data)
+View(litter_data)</code></pre>
+<p>Cretae joined data:</p>
+<pre class="r"><code>fas_data = left_join(pup_data, litter_data, by = &quot;litter_number&quot;)
+
+View(fas_data)</code></pre>
+</div>
 
 
 
