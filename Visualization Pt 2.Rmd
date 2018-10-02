@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggridges)
+library(patchwork)
 ```
 
 ```{r}
@@ -151,6 +152,66 @@ waikiki =
 ggplot(waikiki, aes(x = date, y = tmax, color = name)) + 
   geom_point() + 
   geom_line(data = central_park)
+```
+
+```{r}
+tmax_tmin_p = ggplot(weather_df, aes(x = tmax, y = tmin, color = name)) + 
+  geom_point(alpha = .5) +
+  theme(legend.position = "none")
+
+prcp_dens_p = weather_df %>% 
+  filter(prcp > 0) %>% 
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = .5) + 
+  theme(legend.position = "none")
+
+tmax_date_p = ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "bottom")
+
+(tmax_tmin_p + prcp_dens_p) / tmax_date_p
+```
+(+): put these two graphs on the same row
+/  tmax_date_p: put this graph into the next row 
+
+## Data manipulation 
+
+Factors...
+
+```{r}
+ggplot(weather_df, aes(x = name, y = tmax)) + 
+  geom_violin()
+```
+
+```{r}
+weather_df %>%
+  mutate(name = forcats::fct_reorder(name, tmax)) %>% 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+```{r}
+weather_df %>%
+  mutate(name = forcats::fct_relevel(name, c("Waikiki_HA", "CentralPark_NY", "Waterhole_WA"))) %>% 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+Categorical variables will be ordered alphabetically; factors will follow the specified order level that underlies the variable labels. You can change the order level of a factor variable to your specified preference using forcats::fct_relevel or according to the value of another variable using forcats::fct_reorder.
+
+Advanced tidying...
+
+```{r}
+weather_df %>%
+  select(name, tmax, tmin) %>% 
+  gather(key = observation, value = temp, tmax:tmin) %>% 
+  ggplot(aes(x = temp, fill = observation)) +
+  geom_density(alpha = .5) + 
+  facet_grid(~name) + 
+  viridis::scale_fill_viridis(discrete = TRUE)
 ```
 
 
