@@ -163,3 +163,65 @@ weather_df %>%
   knitr::kable(digits = 3)
 ```
 
+## Grouped mutate 
+
+You will get a month by month mean_tmax value 
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  mutate(mean_tmax = mean(tmax, na.rm = TRUE))
+```
+
+A more interesting example ...
+
+The mean_tmax: takes the average temprature of Central Park and repeated everywhere in the dataset. 
+The second line uses the tmax value minus the mean for each group. 
+
+We can then make a plot to see what does it look like. 
+ 
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  mutate(mean_tmax=mean(tmax, na.rm= TRUE),
+         centered_tmax=tmax-mean_tmax) %>% 
+ggplot(aes(x = date, y = centered_tmax, color = name)) +
+  geom_point()
+```
+
+## Windows function 
+
+The previous example used mean() to compute the mean within each group, which was then subtracted from the observed max tempurature. mean() takes n inputs and produces a single output.
+
+Window functions, in contrast, take n inputs and return n outputs, and the outputs depend on all the inputs. 
+
+Use ranks... 
+
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  mutate(tmax_rank = min_rank(desc(tmax))) %>% 
+  filter(tmax_rank < 2)
+```
+
+lag function...
+
+Offsets, especially lags, are used to compare an observation to it’s previous value. This is useful, for example, to find the day-by-day change in max temperature within each station over the year:
+
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(lag_tmax = lag(tmax))
+```
+
+## How neat is this?
+
+How much does the temperature change from onr day to anothetr day? Then can calculate the standard deviation of one day change of each location. 
+
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(one_day_change = tmax - lag(tmax)) %>% 
+  summarize(sd_one_day_change = sd(one_day_change, na.rm = TRUE))
+```
+
+
