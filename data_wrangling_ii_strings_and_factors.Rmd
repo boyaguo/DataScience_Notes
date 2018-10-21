@@ -1,0 +1,121 @@
+---
+title: "data_wrangling_ii_strings_and_factors"
+author: "Boya Guo"
+date: "10/16/2018"
+output: html_document
+---
+
+String: just the text, character varaible, no underlying structures 
+
+Factor: Numeric structure with character labels sitting on top. For variable with only a few collection of categories.
+
+```{r, include=FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  fig.width=6,
+  fig.asp=.6,
+  out.width= "90%"
+)
+
+theme_set(theme_bw()+ theme(legend.position="bottom"))
+
+library(rvest)
+
+library(p8105.datasets)
+```
+
+str_detect detects "jeff" to see which one in the string matches "jeff", str_place will replace if find "jeff". We know eaxactly what we want to replace. 
+
+```{r}
+string_vec = c("my", "name", "is", "jeff")
+
+str_detect(string_vec, "jeff")
+
+str_replace(string_vec, "jeff", "Jeff")
+```
+
+
+str_detect(string_vec, "i think") detects every sentence with "i think"
+str_detect(string_vec, "^i think") detects only those begin with "i think"
+str_detect(string_vec, "i think$") detects those end with "i think"
+```{r}
+string_vec = c(
+  "i think we all rule for participating",
+  "i think i have been caught",
+  "i think this will be quite fun actually",
+  "it will be fun, i think"
+  )
+
+str_detect(string_vec, "i think")
+str_detect(string_vec, "^i think")
+
+str_detect(string_vec, "i think$")
+```
+
+str_detect(string_vec,"[Bb]ush") finds those begin with either upper case or lower case B and ush. 
+```{r}
+string_vec = c(
+  "Y'all remember Pres. HW Bush?",
+  "I saw a green bush",
+  "BBQ and Bushwalking at Molonglo Gorge",
+  "BUSH!!"
+  )
+
+str_detect(string_vec,"[Bb]ush")
+```
+
+str_detect(string_vec, "^[0-9][a-zA-Z]") finds a number and then follows by any letter 
+```{r}
+string_vec = c(
+  '7th inning stretch',
+  '1st half soon to begin. Texas won the toss.',
+  'she is 5 feet 4 inches tall',
+  '3AM - cant sleep :('
+  )
+
+str_detect(string_vec, "^[0-9][a-zA-Z]")
+```
+
+str_detect(string_vec, "7.11") selects 7 follows by everything and follows by 11
+```{r}
+string_vec = c(
+  'Its 7:11 in the evening',
+  'want to go to 7-11?',
+  'my flight is AA711',
+  'NetBios: scanning ip 203.167.114.66'
+  )
+
+str_detect(string_vec, "7.11")
+```
+
+Some characters are “special”. These include [ and ], ( and ), and .. If you want to search for these, you have to indicate they’re special using \. Unfortunately, \ is also special. So you need to use two \\.
+```{r}
+string_vec = c(
+  'The CI is [2, 5]',
+  ':-]',
+  ':-[',
+  'I found the answer on pages [6-7]'
+  )
+
+str_detect(string_vec, "\\[")
+```
+
+### PULSE data 
+
+This is the way that we recommend you to tidy the PULSE dataset 
+
+```{r}
+pulse_data = haven::read_sas("./data/public_pulse_data.sas7bdat") %>%
+  janitor::clean_names() %>%
+  gather(key = visit, value = bdi, bdi_score_bl:bdi_score_12m) %>%
+  mutate(visit = str_replace(visit, "bdi_score_", ""),
+         visit = str_replace(visit, "bl", "00m"),
+         visit = fct_relevel(visit, str_c(c("00", "01", "06", "12"), "m"))) %>%
+  arrange(id, visit)
+
+print(pulse_data, n = 12)
+```
+
+
+

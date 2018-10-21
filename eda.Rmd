@@ -93,6 +93,20 @@ weather_df %>%
    count(name, month) 
 ```
 
+```{r}
+weather_df %>%
+  pull(name) %>%
+  table %>% min 
+```
+
+```{r}
+weather_df %>%
+  pull(name)%>%
+  table %>% which.min
+```
+
+
+
 ## Group summaries 
 
 ```{r}
