@@ -1,0 +1,209 @@
+---
+title: "Iteration and List Columns"
+author: "Boya Guo"
+date: "2018年10月30日"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+
+set.seed(1)
+```
+
+### List 
+
+In R, vectors are limited to a single data class – all elements are characters, or all numeric, or all logical. Trying to join the following vectors will result in coersion, as would creating vectors of mixed types.
+
+```{r}
+vec_numeric = 5:8
+vec_char = c("My", "name", "is", "Jeff")
+vec_logical = c(TRUE, TRUE, TRUE, FALSE)
+```
+
+Lists contain indexed elements, and the indexed elements themselves be scalars, vectors, or other things entirely.
+```{r}
+l = list(vec_numeric = 5:8,
+         mat         = matrix(1:8, 2, 4),
+         vec_logical = c(TRUE, FALSE),
+         summary     = summary(rnorm(1000)))
+l
+```
+
+```{r}
+l$vec_numeric
+
+l[[1]]
+
+l[[1]][1:3]
+```
+
+
+### for loops
+
+```{r}
+df = data_frame(
+  a = rnorm(20, 3, 1),
+  b = rnorm(20, 0, 5),
+  c = rnorm(20, 10, .2),
+  d = rnorm(20, -3, 1)
+)
+
+is.list(df)
+```
+
+```{r}
+mean_and_sd = function(x) {
+  
+  if (!is.numeric(x)) {
+    stop("Argument x should be numeric")
+  } else if (length(x) == 1) {
+    stop("Cannot be computed for length 1 vectors")
+  }
+  
+  mean_x = mean(x)
+  sd_x = sd(x)
+
+  tibble(
+    mean = mean_x, 
+    sd = sd_x
+  )
+}
+
+mean_and_sd(df[[1]])
+
+mean_and_sd(df[[2]])
+
+mean_and_sd(df[[3]])
+
+mean_and_sd(df[[4]])
+```
+
+for loop
+```{r}
+output = vector("list", length = 4)
+
+for (i in 1:4) {
+  output[[i]] = mean_and_sd(df[[i]])
+}
+```
+
+### let's try a different function using "map"" 
+
+```{r}
+output = map(df, mean_and_sd)
+```
+
+### map variants 
+
+```{r}
+output = map_dbl(df, median, .id = "input")
+
+output = map_dfr(df, mean_and_sd, .id = "input")
+```
+
+
+```{r}
+output = map2(.x = input_1, .y = input_2, ~func(arg_1 = .x, arg_2 = .y))
+```
+
+### Napoleon example 
+
+```{r}
+library(rvest)
+
+read_page_reviews <- function(url) {
+  
+  h = read_html(url)
+  
+  title = h %>%
+    html_nodes("#cm_cr-review_list .review-title") %>%
+    html_text()
+  
+  stars = h %>%
+    html_nodes("#cm_cr-review_list .review-rating") %>%
+    html_text() %>%
+    str_extract("\\d") %>%
+    as.numeric()
+  
+  text = h %>%
+    html_nodes(".review-data:nth-child(4)") %>%
+    html_text()
+  
+  data_frame(title, stars, text)
+}
+```
+
+Use this function to read the five pages of reviews on the URLs defined in the code chunk below.
+
+```{r}
+url_base = "https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&reviewerType=avp_only_reviews&sortBy=recent&pageNumber="
+vec_urls = str_c(url_base, 1:5)
+
+output = vector("list", 5)
+
+for (i in 1:5) {
+  output[[i]] = read_page_reviews(vec_urls[[i]])
+}
+
+dynamite_reviews = bind_rows(output)
+
+dynamite_reviews = map_df(vec_urls, read_page_reviews)
+```
+
+
+Review weather dataset
+
+```{r}
+library(rnoaa)
+
+weather = 
+  meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                      var = c("PRCP", "TMIN", "TMAX"), 
+                      date_min = "2016-01-01",
+                      date_max = "2016-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+```{r}
+weather_nest = 
+  nest(weather, date:tmin)
+
+weather_nest
+```
+
+```{r}
+weather_nest %>% pull(name)
+
+weather_nest %>% pull(id)
+
+weather_nest %>% pull(data)
+```
+
+### Operations on list columns
+
+```{r}
+weather_lm = function(df) {
+  lm(tmax ~ tmin, data = df)
+}
+
+weather_lm(weather_nest$data[[1]])
+
+map(weather_nest$data, weather_lm)
+```
+
+```{r}
+weather_nest = 
+  weather_nest %>% 
+  mutate(models = map(data, weather_lm))
+
+weather_nest
+```
+
+

@@ -160,3 +160,54 @@ mean_and_sd = function(x) {
 ```
 
 ### Multiple inputs
+
+Look at simple linear regression...
+
+``` r
+sim_data = tibble(
+  x = rnorm(30, mean = 1, sd = 1),
+  y = 2 + 3 * x + rnorm(30, 0, 1)
+)
+
+ls_fit = lm(y ~ x, data = sim_data)
+  
+beta0_hat = coef(ls_fit)[1]
+beta1_hat = coef(ls_fit)[2]
+```
+
+``` r
+sim_regression = function(n, beta0 = 2, beta1 = 3) {
+  
+  sim_data = tibble(
+    x = rnorm(n, mean = 1, sd = 1),
+    y = beta0 + beta1 * x + rnorm(n, 0, 1)
+  )
+  
+  ls_fit = lm(y ~ x, data = sim_data)
+  
+  tibble(
+    beta0_hat = coef(ls_fit)[1],
+    beta1_hat = coef(ls_fit)[2]
+  )
+}
+```
+
+``` r
+sim_regression(n = 3000, beta0 = 0, beta1 = -1)
+## # A tibble: 1 x 2
+##   beta0_hat beta1_hat
+##       <dbl>     <dbl>
+## 1   -0.0266    -0.986
+
+sim_regression(n = 3000)
+## # A tibble: 1 x 2
+##   beta0_hat beta1_hat
+##       <dbl>     <dbl>
+## 1      2.02      2.97
+
+sim_regression(300, 2, 3)
+## # A tibble: 1 x 2
+##   beta0_hat beta1_hat
+##       <dbl>     <dbl>
+## 1      2.00      3.00
+```
