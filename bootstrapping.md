@@ -1,4 +1,4 @@
-1115 bootstrapping
+11/15 bootstrapping
 ================
 Boya Guo
 2018年11月15日
@@ -252,6 +252,8 @@ sim_df_const %>%
 
 ### Bootstrap is also useful for non-standard parameters
 
+Generate data with a small sample size of 25
+
 ``` r
 sim_df = 
   tibble(
@@ -260,3 +262,67 @@ sim_df =
     y = 2 + 3 * x + error
   )
 ```
+
+Use modelr::bootstrap to draw the samples and broom::glance to produce r.squared values
+
+``` r
+sim_df %>% 
+  modelr::bootstrap(n = 1000) %>% 
+  mutate(models = map(strap, ~lm(y ~ x, data = .x) ),
+         results = map(models, broom::glance)) %>% 
+  select(-strap, -models) %>% 
+  unnest() %>% 
+  ggplot(aes(x = r.squared)) + geom_density()
+```
+
+![](bootstrapping_files/figure-markdown_github/unnamed-chunk-16-1.png)
+
+Produce a distribution for log(β0∗β1)
+
+``` r
+sim_df %>% 
+  modelr::bootstrap(n = 1000) %>% 
+  mutate(models = map(strap, ~lm(y ~ x, data = .x) ),
+         results = map(models, broom::tidy)) %>% 
+  select(-strap, -models) %>% 
+  unnest() %>% 
+  select(id = `.id`, term, estimate) %>% 
+  spread(key = term, value = estimate) %>% 
+  rename(beta0 = `(Intercept)`, beta1 = x) %>% 
+  mutate(log_b0b1 = log(beta0 * beta1)) %>% 
+  ggplot(aes(x = log_b0b1)) + geom_density()
+```
+
+    ## Warning in log(beta0 * beta1): ²úÉúÁËNaNs
+
+    ## Warning: Removed 5 rows containing non-finite values (stat_density).
+
+![](bootstrapping_files/figure-markdown_github/unnamed-chunk-17-1.png)
+
+### Airbnb data example
+
+``` r
+data("nyc_airbnb")
+
+nyc_airbnb = 
+  nyc_airbnb %>% 
+  mutate(stars = review_scores_location / 2) %>% 
+  rename(boro = neighbourhood_group,
+         neighborhood = neighbourhood) %>% 
+  filter(boro != "Staten Island") %>% 
+  select(price, stars, boro, neighborhood, room_type)
+```
+
+``` r
+nyc_airbnb %>% 
+  filter(boro == "Manhattan") %>% 
+  modelr::bootstrap(n = 1000) %>% 
+  mutate(models = map(strap, ~ lm(price ~ stars + room_type, data = .x)),
+         results = map(models, broom::tidy)) %>% 
+  select(results) %>% 
+  unnest() %>% 
+  filter(term == "stars") %>% 
+  ggplot(aes(x = estimate)) + geom_density()
+```
+
+![](bootstrapping_files/figure-markdown_github/unnamed-chunk-19-1.png)
